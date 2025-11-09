@@ -11,56 +11,170 @@ using System.Xml;
 
 namespace Schneegans.Unattend;
 
+/// <summary>
+/// Represents the different configuration passes in the Windows Setup process.
+/// </summary>
 public enum Pass
 {
+  /// <summary>
+  /// The offlineServicing configuration pass is used to apply updates, drivers, and language packs to a Windows image offline.
+  /// </summary>
   offlineServicing,
+  /// <summary>
+  /// The windowsPE configuration pass is used to configure Windows Preinstallation Environment (WinPE) settings.
+  /// </summary>
   windowsPE,
+  /// <summary>
+  /// The generalize configuration pass is used to create a reference Windows image that can be captured and applied to other computers.
+  /// </summary>
   generalize,
+  /// <summary>
+  /// The specialize configuration pass is used to apply computer-specific settings to a Windows installation.
+  /// </summary>
   specialize,
+  /// <summary>
+  /// The auditSystem configuration pass is used to add drivers and applications to a Windows installation in audit mode.
+  /// </summary>
   auditSystem,
+  /// <summary>
+  /// The auditUser configuration pass is used to apply user-specific settings to a Windows installation in audit mode.
+  /// </summary>
   auditUser,
+  /// <summary>
+  /// The oobeSystem configuration pass is used to apply settings to a Windows installation before the Out-of-Box Experience (OOBE) is complete.
+  /// </summary>
   oobeSystem
 }
 
+/// <summary>
+/// Specifies the recovery mode for the Windows installation.
+/// </summary>
 public enum RecoveryMode
 {
-  None, Folder, Partition
+  /// <summary>
+  /// No recovery option is configured.
+  /// </summary>
+  None,
+  /// <summary>
+  /// A recovery folder is created.
+  /// </summary>
+  Folder,
+  /// <summary>
+  /// A dedicated recovery partition is created.
+  /// </summary>
+  Partition
 }
 
+/// <summary>
+/// Specifies the partition layout for the disk.
+/// </summary>
 public enum PartitionLayout
 {
-  MBR, GPT
+  /// <summary>
+  /// Master Boot Record (MBR) partition layout.
+  /// </summary>
+  MBR,
+  /// <summary>
+  /// GUID Partition Table (GPT) partition layout.
+  /// </summary>
+  GPT
 }
 
+/// <summary>
+/// Specifies the processor architecture.
+/// </summary>
 public enum ProcessorArchitecture
 {
-  x86, amd64, arm64
+  /// <summary>
+  /// 32-bit (x86) processor architecture.
+  /// </summary>
+  x86,
+  /// <summary>
+  /// 64-bit (amd64) processor architecture.
+  /// </summary>
+  amd64,
+  /// <summary>
+  /// ARM64 processor architecture.
+  /// </summary>
+  arm64
 }
 
+/// <summary>
+/// Specifies the mode for express settings.
+/// </summary>
 public enum ExpressSettingsMode
 {
-  Interactive, EnableAll, DisableAll
+  /// <summary>
+  /// The user will be prompted to configure express settings.
+  /// </summary>
+  Interactive,
+  /// <summary>
+  /// All express settings will be enabled.
+  /// </summary>
+  EnableAll,
+  /// <summary>
+  /// All express settings will be disabled.
+  /// </summary>
+  DisableAll
 }
 
+/// <summary>
+/// Specifies the appearance of the search box on the taskbar.
+/// </summary>
 public enum TaskbarSearchMode
 {
+  /// <summary>
+  /// The search box is hidden.
+  /// </summary>
   Hide = 0,
+  /// <summary>
+  /// Only the search icon is shown.
+  /// </summary>
   Icon = 1,
+  /// <summary>
+  /// The full search box is shown.
+  /// </summary>
   Box = 2,
+  /// <summary>
+  /// The search box is shown with a label.
+  /// </summary>
   Label = 3
 }
 
+/// <summary>
+/// Represents a component and the pass in which it should be configured.
+/// </summary>
+/// <param name="Component">The name of the component.</param>
+/// <param name="Pass">The configuration pass.</param>
 public record struct ComponentAndPass(
   string Component,
   Pass Pass
 );
 
-abstract class CommandConfig
+/// <summary>
+/// Defines the configuration for a command to be executed during the Windows Setup process.
+/// </summary>
+internal abstract class CommandConfig
 {
+  /// <summary>
+  /// A command to be executed in the windowsPE pass.
+  /// </summary>
   public readonly static CommandConfig WindowsPE = new WindowsPECommandConfig();
+  /// <summary>
+  /// A command to be executed in the specialize pass.
+  /// </summary>
   public readonly static CommandConfig Specialize = new SpecializeCommandConfig();
+  /// <summary>
+  /// A command to be executed in the oobeSystem pass.
+  /// </summary>
   public readonly static CommandConfig Oobe = new OobeCommandConfig();
 
+  /// <summary>
+  /// Creates the XML element for the command.
+  /// </summary>
+  /// <param name="doc">The XML document.</param>
+  /// <param name="ns">The namespace manager.</param>
+  /// <returns>The created XML element.</returns>
   public abstract XmlElement CreateElement(XmlDocument doc, XmlNamespaceManager ns);
 
   /// <summary>
@@ -124,13 +238,27 @@ abstract class CommandConfig
   }
 }
 
-class CommandAppender(XmlDocument doc, XmlNamespaceManager ns, CommandConfig config)
+/// <summary>
+/// Appends commands to the unattend.xml file.
+/// </summary>
+/// <param name="doc">The XML document.</param>
+/// <param name="ns">The namespace manager.</param>
+/// <param name="config">The command configuration.</param>
+internal class CommandAppender(XmlDocument doc, XmlNamespaceManager ns, CommandConfig config)
 {
+  /// <summary>
+  /// Appends a single command.
+  /// </summary>
+  /// <param name="value">The command to append.</param>
   public void Append(string value)
   {
     config.CreateElement(doc, ns).InnerText = value;
   }
 
+  /// <summary>
+  /// Appends a collection of commands.
+  /// </summary>
+  /// <param name="values">The commands to append.</param>
   public void Append(IEnumerable<string> values)
   {
     foreach (string value in values)
@@ -140,23 +268,47 @@ class CommandAppender(XmlDocument doc, XmlNamespaceManager ns, CommandConfig con
   }
 }
 
+/// <summary>
+/// Builds various types of commands.
+/// </summary>
+/// <param name="hidePowerShellWindows">Whether to hide PowerShell windows.</param>
 public class CommandBuilder(bool hidePowerShellWindows)
 {
+  /// <summary>
+  /// Returns a raw command without any modification.
+  /// </summary>
+  /// <param name="command">The command.</param>
+  /// <returns>The raw command.</returns>
   public string Raw(string command)
   {
     return command;
   }
 
+  /// <summary>
+  /// Wraps a command in <c>cmd.exe /c</c>.
+  /// </summary>
+  /// <param name="command">The command.</param>
+  /// <returns>The wrapped command.</returns>
   public string ShellCommand(string command)
   {
     return $@"cmd.exe /c ""{command}""";
   }
 
+  /// <summary>
+  /// Creates a command to modify the Windows Registry.
+  /// </summary>
+  /// <param name="value">The arguments for <c>reg.exe</c>.</param>
+  /// <returns>The full registry command.</returns>
   public string RegistryCommand(string value)
   {
     return $"reg.exe {value}";
   }
 
+  /// <summary>
+  /// Creates a PowerShell command.
+  /// </summary>
+  /// <param name="value">The PowerShell script to execute.</param>
+  /// <returns>The full PowerShell command.</returns>
   public string PowerShellCommand(string value)
   {
     {
@@ -177,21 +329,42 @@ public class CommandBuilder(bool hidePowerShellWindows)
     return @$"powershell.exe -WindowStyle {(hidePowerShellWindows ? "Hidden" : "Normal")} -NoProfile -Command ""{value}""";
   }
 
+  /// <summary>
+  /// Creates a command to invoke a PowerShell script from a file.
+  /// </summary>
+  /// <param name="filepath">The path to the PowerShell script.</param>
+  /// <returns>The full command.</returns>
   public string InvokePowerShellScript(string filepath)
   {
     return PowerShellCommand($"Get-Content -LiteralPath '{filepath}' -Raw | Invoke-Expression;");
   }
 
+  /// <summary>
+  /// Creates a command to invoke a VBScript file.
+  /// </summary>
+  /// <param name="filepath">The path to the VBScript file.</param>
+  /// <returns>The full command.</returns>
   public string InvokeVBScript(string filepath)
   {
     return @$"cscript.exe //E:vbscript ""{filepath}""";
   }
 
+  /// <summary>
+  /// Creates a command to invoke a JScript file.
+  /// </summary>
+  /// <param name="filepath">The path to the JScript file.</param>
+  /// <returns>The full command.</returns>
   public string InvokeJScript(string filepath)
   {
     return @$"cscript.exe //E:jscript ""{filepath}""";
   }
 
+  /// <summary>
+  /// Creates a series of commands to write lines to a file in the Windows PE environment.
+  /// </summary>
+  /// <param name="path">The path to the file.</param>
+  /// <param name="lines">The lines to write.</param>
+  /// <returns>A list of commands.</returns>
   public List<string> WriteToFilePE(string path, IEnumerable<string> lines)
   {
     static IEnumerable<string> Trim(IEnumerable<string> input)
@@ -833,87 +1006,113 @@ public class UnattendGenerator
 {
   public UnattendGenerator()
   {
-    {
-      string json = Util.StringFromResource("Bloatware.json");
-      JsonSerializerSettings settings = new()
-      {
-        TypeNameHandling = TypeNameHandling.Auto,
-      };
-      Bloatwares = JsonConvert.DeserializeObject<Bloatware[]>(json, settings).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("Component.json");
-      Components = JsonConvert.DeserializeObject<Component[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("ImageLanguage.json");
-      ImageLanguages = JsonConvert.DeserializeObject<ImageLanguage[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("KeyboardIdentifier.json");
-      KeyboardIdentifiers = JsonConvert.DeserializeObject<KeyboardIdentifier[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("GeoId.json");
-      GeoLocations = JsonConvert.DeserializeObject<GeoLocation[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("UserLocale.json");
-      JsonConverter[] converters = [new KeyboardConverter(this), new GeoLocationConverter(this)];
-      UserLocales = JsonConvert.DeserializeObject<UserLocale[]>(json, converters).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("WindowsEdition.json");
-      WindowsEditions = JsonConvert.DeserializeObject<WindowsEdition[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("TimeOffset.json");
-      TimeOffsets = JsonConvert.DeserializeObject<TimeOffset[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("DesktopIcon.json");
-      DesktopIcons = JsonConvert.DeserializeObject<DesktopIcon[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("StartFolder.json");
-      JsonConverter[] converters = [new Base64Converter()];
-      StartFolders = JsonConvert.DeserializeObject<StartFolder[]>(json, converters).ToKeyedDictionary();
-    }
+    Bloatwares = LoadBloatwares();
+    Components = LoadComponents();
+    ImageLanguages = LoadImageLanguages();
+    KeyboardIdentifiers = LoadKeyboardIdentifiers();
+    GeoLocations = LoadGeoLocations();
+    UserLocales = LoadUserLocales();
+    WindowsEditions = LoadWindowsEditions();
+    TimeOffsets = LoadTimeOffsets();
+    DesktopIcons = LoadDesktopIcons();
+    StartFolders = LoadStartFolders();
 
+    VerifyData();
+  }
+
+  private IImmutableDictionary<string, Bloatware> LoadBloatwares()
+  {
+    string json = Util.StringFromResource("Bloatware.json");
+    JsonSerializerSettings settings = new()
     {
-      VerifyUniqueKeys(Components.Values, e => e.Id);
-    }
-    {
-      VerifyUniqueKeys(WindowsEditions.Values, e => e.Id);
-      VerifyUniqueKeys(WindowsEditions.Values, e => e.DisplayName);
-      VerifyUniqueKeys(WindowsEditions.Values, e => e.ProductKey);
-    }
-    {
-      VerifyUniqueKeys(UserLocales.Values, e => e.Id);
-      VerifyUniqueKeys(UserLocales.Values, e => e.DisplayName);
-    }
-    {
-      VerifyUniqueKeys(KeyboardIdentifiers.Values, e => e.Id);
-      VerifyUniqueKeys(KeyboardIdentifiers.Values, e => e.DisplayName);
-    }
-    {
-      VerifyUniqueKeys(ImageLanguages.Values, e => e.Id);
-      VerifyUniqueKeys(ImageLanguages.Values, e => e.DisplayName);
-    }
-    {
-      VerifyUniqueKeys(TimeOffsets.Values, e => e.Id);
-      VerifyUniqueKeys(TimeOffsets.Values, e => e.DisplayName);
-    }
-    {
-      VerifyUniqueKeys(DesktopIcons.Values, e => e.Id);
-      VerifyUniqueKeys(DesktopIcons.Values, e => e.Guid);
-      VerifyUniqueKeys(DesktopIcons.Values, e => e.DisplayName);
-    }
-    {
-      VerifyUniqueKeys(StartFolders.Values, e => e.Id);
-      VerifyUniqueKeys(StartFolders.Values, e => e.DisplayName);
-      VerifyUniqueKeys(StartFolders.Values, e => Convert.ToBase64String(e.Bytes));
-    }
+      TypeNameHandling = TypeNameHandling.Auto,
+    };
+    return JsonConvert.DeserializeObject<Bloatware[]>(json, settings).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, Component> LoadComponents()
+  {
+    string json = Util.StringFromResource("Component.json");
+    return JsonConvert.DeserializeObject<Component[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, ImageLanguage> LoadImageLanguages()
+  {
+    string json = Util.StringFromResource("ImageLanguage.json");
+    return JsonConvert.DeserializeObject<ImageLanguage[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, KeyboardIdentifier> LoadKeyboardIdentifiers()
+  {
+    string json = Util.StringFromResource("KeyboardIdentifier.json");
+    return JsonConvert.DeserializeObject<KeyboardIdentifier[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, GeoLocation> LoadGeoLocations()
+  {
+    string json = Util.StringFromResource("GeoId.json");
+    return JsonConvert.DeserializeObject<GeoLocation[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, UserLocale> LoadUserLocales()
+  {
+    string json = Util.StringFromResource("UserLocale.json");
+    JsonConverter[] converters = [new KeyboardConverter(this), new GeoLocationConverter(this)];
+    return JsonConvert.DeserializeObject<UserLocale[]>(json, converters).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, WindowsEdition> LoadWindowsEditions()
+  {
+    string json = Util.StringFromResource("WindowsEdition.json");
+    return JsonConvert.DeserializeObject<WindowsEdition[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, TimeOffset> LoadTimeOffsets()
+  {
+    string json = Util.StringFromResource("TimeOffset.json");
+    return JsonConvert.DeserializeObject<TimeOffset[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, DesktopIcon> LoadDesktopIcons()
+  {
+    string json = Util.StringFromResource("DesktopIcon.json");
+    return JsonConvert.DeserializeObject<DesktopIcon[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, StartFolder> LoadStartFolders()
+  {
+    string json = Util.StringFromResource("StartFolder.json");
+    JsonConverter[] converters = [new Base64Converter()];
+    return JsonConvert.DeserializeObject<StartFolder[]>(json, converters).ToKeyedDictionary();
+  }
+
+  private void VerifyData()
+  {
+    VerifyUniqueKeys(Components.Values, e => e.Id);
+
+    VerifyUniqueKeys(WindowsEditions.Values, e => e.Id);
+    VerifyUniqueKeys(WindowsEditions.Values, e => e.DisplayName);
+    VerifyUniqueKeys(WindowsEditions.Values, e => e.ProductKey);
+
+    VerifyUniqueKeys(UserLocales.Values, e => e.Id);
+    VerifyUniqueKeys(UserLocales.Values, e => e.DisplayName);
+
+    VerifyUniqueKeys(KeyboardIdentifiers.Values, e => e.Id);
+    VerifyUniqueKeys(KeyboardIdentifiers.Values, e => e.DisplayName);
+
+    VerifyUniqueKeys(ImageLanguages.Values, e => e.Id);
+    VerifyUniqueKeys(ImageLanguages.Values, e => e.DisplayName);
+
+    VerifyUniqueKeys(TimeOffsets.Values, e => e.Id);
+    VerifyUniqueKeys(TimeOffsets.Values, e => e.DisplayName);
+
+    VerifyUniqueKeys(DesktopIcons.Values, e => e.Id);
+    VerifyUniqueKeys(DesktopIcons.Values, e => e.Guid);
+    VerifyUniqueKeys(DesktopIcons.Values, e => e.DisplayName);
+
+    VerifyUniqueKeys(StartFolders.Values, e => e.Id);
+    VerifyUniqueKeys(StartFolders.Values, e => e.DisplayName);
+    VerifyUniqueKeys(StartFolders.Values, e => Convert.ToBase64String(e.Bytes));
   }
 
   private static void VerifyUniqueKeys<T>(IEnumerable<T> items, Func<T, object> keySelector)
@@ -970,43 +1169,19 @@ public class UnattendGenerator
   [return: NotNull]
   public T Lookup<T>(string key) where T : class, IKeyed
   {
-    if (typeof(T) == typeof(WindowsEdition))
+    return (T)(object)(this as object switch
     {
-      return (T)(object)Lookup(WindowsEditions, key);
-    }
-    if (typeof(T) == typeof(UserLocale))
-    {
-      return (T)(object)Lookup(UserLocales, key);
-    }
-    if (typeof(T) == typeof(ImageLanguage))
-    {
-      return (T)(object)Lookup(ImageLanguages, key);
-    }
-    if (typeof(T) == typeof(KeyboardIdentifier))
-    {
-      return (T)(object)Lookup(KeyboardIdentifiers, key);
-    }
-    if (typeof(T) == typeof(TimeOffset))
-    {
-      return (T)(object)Lookup(TimeOffsets, key);
-    }
-    if (typeof(T) == typeof(Bloatware))
-    {
-      return (T)(object)Lookup(Bloatwares, key);
-    }
-    if (typeof(T) == typeof(GeoLocation))
-    {
-      return (T)(object)Lookup(GeoLocations, key);
-    }
-    if (typeof(T) == typeof(DesktopIcon))
-    {
-      return (T)(object)Lookup(DesktopIcons, key);
-    }
-    if (typeof(T) == typeof(Component))
-    {
-      return (T)(object)Lookup(Components, key);
-    }
-    throw new NotSupportedException();
+      _ when typeof(T) == typeof(WindowsEdition) => Lookup(WindowsEditions, key),
+      _ when typeof(T) == typeof(UserLocale) => Lookup(UserLocales, key),
+      _ when typeof(T) == typeof(ImageLanguage) => Lookup(ImageLanguages, key),
+      _ when typeof(T) == typeof(KeyboardIdentifier) => Lookup(KeyboardIdentifiers, key),
+      _ when typeof(T) == typeof(TimeOffset) => Lookup(TimeOffsets, key),
+      _ when typeof(T) == typeof(Bloatware) => Lookup(Bloatwares, key),
+      _ when typeof(T) == typeof(GeoLocation) => Lookup(GeoLocations, key),
+      _ when typeof(T) == typeof(DesktopIcon) => Lookup(DesktopIcons, key),
+      _ when typeof(T) == typeof(Component) => Lookup(Components, key),
+      _ => throw new NotSupportedException(),
+    });
   }
 
   public XmlDocument GenerateXml(Configuration config)

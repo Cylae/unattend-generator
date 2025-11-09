@@ -44,7 +44,17 @@ This project is now a graphical application! 🖼️
 
 5.  **Generate the `autounattend.xml` file:**
 
-    Click the "Générer le fichier autounattend.xml..." button to save the file to your desired location, for example, a USB drive.
+    Click the "Generate autounattend.xml file..." button to save the file to your desired location, for example, a USB drive.
+
+##  troubleshooting
+
+### Winget package not found
+
+If the application is unable to find a Winget package, make sure that:
+
+- The package name is spelled correctly.
+- The package is available in the Winget repositories. You can check this by running `winget search <package-name>` in a terminal.
+- Winget is installed and accessible from the command line. If not, you can install it from the [Microsoft Store](https://www.microsoft.com/p/app-installer/9nblggh4nns1).
 
 ## 🤝 Contributing
 
