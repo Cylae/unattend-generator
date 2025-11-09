@@ -11,56 +11,170 @@ using System.Xml;
 
 namespace Schneegans.Unattend;
 
+/// <summary>
+/// Represents the different configuration passes in the Windows Setup process.
+/// </summary>
 public enum Pass
 {
+  /// <summary>
+  /// The offlineServicing configuration pass is used to apply updates, drivers, and language packs to a Windows image offline.
+  /// </summary>
   offlineServicing,
+  /// <summary>
+  /// The windowsPE configuration pass is used to configure Windows Preinstallation Environment (WinPE) settings.
+  /// </summary>
   windowsPE,
+  /// <summary>
+  /// The generalize configuration pass is used to create a reference Windows image that can be captured and applied to other computers.
+  /// </summary>
   generalize,
+  /// <summary>
+  /// The specialize configuration pass is used to apply computer-specific settings to a Windows installation.
+  /// </summary>
   specialize,
+  /// <summary>
+  /// The auditSystem configuration pass is used to add drivers and applications to a Windows installation in audit mode.
+  /// </summary>
   auditSystem,
+  /// <summary>
+  /// The auditUser configuration pass is used to apply user-specific settings to a Windows installation in audit mode.
+  /// </summary>
   auditUser,
+  /// <summary>
+  /// The oobeSystem configuration pass is used to apply settings to a Windows installation before the Out-of-Box Experience (OOBE) is complete.
+  /// </summary>
   oobeSystem
 }
 
+/// <summary>
+/// Specifies the recovery mode for the Windows installation.
+/// </summary>
 public enum RecoveryMode
 {
-  None, Folder, Partition
+  /// <summary>
+  /// No recovery option is configured.
+  /// </summary>
+  None,
+  /// <summary>
+  /// A recovery folder is created.
+  /// </summary>
+  Folder,
+  /// <summary>
+  /// A dedicated recovery partition is created.
+  /// </summary>
+  Partition
 }
 
+/// <summary>
+/// Specifies the partition layout for the disk.
+/// </summary>
 public enum PartitionLayout
 {
-  MBR, GPT
+  /// <summary>
+  /// Master Boot Record (MBR) partition layout.
+  /// </summary>
+  MBR,
+  /// <summary>
+  /// GUID Partition Table (GPT) partition layout.
+  /// </summary>
+  GPT
 }
 
+/// <summary>
+/// Specifies the processor architecture.
+/// </summary>
 public enum ProcessorArchitecture
 {
-  x86, amd64, arm64
+  /// <summary>
+  /// 32-bit (x86) processor architecture.
+  /// </summary>
+  x86,
+  /// <summary>
+  /// 64-bit (amd64) processor architecture.
+  /// </summary>
+  amd64,
+  /// <summary>
+  /// ARM64 processor architecture.
+  /// </summary>
+  arm64
 }
 
+/// <summary>
+/// Specifies the mode for express settings.
+/// </summary>
 public enum ExpressSettingsMode
 {
-  Interactive, EnableAll, DisableAll
+  /// <summary>
+  /// The user will be prompted to configure express settings.
+  /// </summary>
+  Interactive,
+  /// <summary>
+  /// All express settings will be enabled.
+  /// </summary>
+  EnableAll,
+  /// <summary>
+  /// All express settings will be disabled.
+  /// </summary>
+  DisableAll
 }
 
+/// <summary>
+/// Specifies the appearance of the search box on the taskbar.
+/// </summary>
 public enum TaskbarSearchMode
 {
+  /// <summary>
+  /// The search box is hidden.
+  /// </summary>
   Hide = 0,
+  /// <summary>
+  /// Only the search icon is shown.
+  /// </summary>
   Icon = 1,
+  /// <summary>
+  /// The full search box is shown.
+  /// </summary>
   Box = 2,
+  /// <summary>
+  /// The search box is shown with a label.
+  /// </summary>
   Label = 3
 }
 
+/// <summary>
+/// Represents a component and the pass in which it should be configured.
+/// </summary>
+/// <param name="Component">The name of the component.</param>
+/// <param name="Pass">The configuration pass.</param>
 public record struct ComponentAndPass(
   string Component,
   Pass Pass
 );
 
-abstract class CommandConfig
+/// <summary>
+/// Defines the configuration for a command to be executed during the Windows Setup process.
+/// </summary>
+internal abstract class CommandConfig
 {
+  /// <summary>
+  /// A command to be executed in the windowsPE pass.
+  /// </summary>
   public readonly static CommandConfig WindowsPE = new WindowsPECommandConfig();
+  /// <summary>
+  /// A command to be executed in the specialize pass.
+  /// </summary>
   public readonly static CommandConfig Specialize = new SpecializeCommandConfig();
+  /// <summary>
+  /// A command to be executed in the oobeSystem pass.
+  /// </summary>
   public readonly static CommandConfig Oobe = new OobeCommandConfig();
 
+  /// <summary>
+  /// Creates the XML element for the command.
+  /// </summary>
+  /// <param name="doc">The XML document.</param>
+  /// <param name="ns">The namespace manager.</param>
+  /// <returns>The created XML element.</returns>
   public abstract XmlElement CreateElement(XmlDocument doc, XmlNamespaceManager ns);
 
   /// <summary>
@@ -124,13 +238,27 @@ abstract class CommandConfig
   }
 }
 
-class CommandAppender(XmlDocument doc, XmlNamespaceManager ns, CommandConfig config)
+/// <summary>
+/// Appends commands to the unattend.xml file.
+/// </summary>
+/// <param name="doc">The XML document.</param>
+/// <param name="ns">The namespace manager.</param>
+/// <param name="config">The command configuration.</param>
+internal class CommandAppender(XmlDocument doc, XmlNamespaceManager ns, CommandConfig config)
 {
+  /// <summary>
+  /// Appends a single command.
+  /// </summary>
+  /// <param name="value">The command to append.</param>
   public void Append(string value)
   {
     config.CreateElement(doc, ns).InnerText = value;
   }
 
+  /// <summary>
+  /// Appends a collection of commands.
+  /// </summary>
+  /// <param name="values">The commands to append.</param>
   public void Append(IEnumerable<string> values)
   {
     foreach (string value in values)
@@ -140,23 +268,47 @@ class CommandAppender(XmlDocument doc, XmlNamespaceManager ns, CommandConfig con
   }
 }
 
+/// <summary>
+/// Builds various types of commands.
+/// </summary>
+/// <param name="hidePowerShellWindows">Whether to hide PowerShell windows.</param>
 public class CommandBuilder(bool hidePowerShellWindows)
 {
+  /// <summary>
+  /// Returns a raw command without any modification.
+  /// </summary>
+  /// <param name="command">The command.</param>
+  /// <returns>The raw command.</returns>
   public string Raw(string command)
   {
     return command;
   }
 
+  /// <summary>
+  /// Wraps a command in <c>cmd.exe /c</c>.
+  /// </summary>
+  /// <param name="command">The command.</param>
+  /// <returns>The wrapped command.</returns>
   public string ShellCommand(string command)
   {
     return $@"cmd.exe /c ""{command}""";
   }
 
+  /// <summary>
+  /// Creates a command to modify the Windows Registry.
+  /// </summary>
+  /// <param name="value">The arguments for <c>reg.exe</c>.</param>
+  /// <returns>The full registry command.</returns>
   public string RegistryCommand(string value)
   {
     return $"reg.exe {value}";
   }
 
+  /// <summary>
+  /// Creates a PowerShell command.
+  /// </summary>
+  /// <param name="value">The PowerShell script to execute.</param>
+  /// <returns>The full PowerShell command.</returns>
   public string PowerShellCommand(string value)
   {
     {
@@ -177,21 +329,42 @@ public class CommandBuilder(bool hidePowerShellWindows)
     return @$"powershell.exe -WindowStyle {(hidePowerShellWindows ? "Hidden" : "Normal")} -NoProfile -Command ""{value}""";
   }
 
+  /// <summary>
+  /// Creates a command to invoke a PowerShell script from a file.
+  /// </summary>
+  /// <param name="filepath">The path to the PowerShell script.</param>
+  /// <returns>The full command.</returns>
   public string InvokePowerShellScript(string filepath)
   {
     return PowerShellCommand($"Get-Content -LiteralPath '{filepath}' -Raw | Invoke-Expression;");
   }
 
+  /// <summary>
+  /// Creates a command to invoke a VBScript file.
+  /// </summary>
+  /// <param name="filepath">The path to the VBScript file.</param>
+  /// <returns>The full command.</returns>
   public string InvokeVBScript(string filepath)
   {
     return @$"cscript.exe //E:vbscript ""{filepath}""";
   }
 
+  /// <summary>
+  /// Creates a command to invoke a JScript file.
+  /// </summary>
+  /// <param name="filepath">The path to the JScript file.</param>
+  /// <returns>The full command.</returns>
   public string InvokeJScript(string filepath)
   {
     return @$"cscript.exe //E:jscript ""{filepath}""";
   }
 
+  /// <summary>
+  /// Creates a series of commands to write lines to a file in the Windows PE environment.
+  /// </summary>
+  /// <param name="path">The path to the file.</param>
+  /// <param name="lines">The lines to write.</param>
+  /// <returns>A list of commands.</returns>
   public List<string> WriteToFilePE(string path, IEnumerable<string> lines)
   {
     static IEnumerable<string> Trim(IEnumerable<string> input)
