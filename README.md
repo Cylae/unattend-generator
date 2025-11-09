@@ -44,7 +44,7 @@ This project is now a graphical application! 🖼️
 
 5.  **Generate the `autounattend.xml` file:**
 
-    Click the "Générer le fichier autounattend.xml..." button to save the file to your desired location, for example, a USB drive.
+    Click the "Generate autounattend.xml file..." button to save the file to your desired location, for example, a USB drive.
 
 ## 🤝 Contributing
 

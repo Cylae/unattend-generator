@@ -40,7 +40,7 @@ namespace Schneegans.Unattend
             this.addButton.Location = new System.Drawing.Point(260, 183);
             this.addButton.Name = "addButton";
             this.addButton.Size = new System.Drawing.Size(75, 23);
-            this.addButton.Text = "Ajouter";
+            this.addButton.Text = "Add";
             this.addButton.UseVisualStyleBackColor = true;
             this.addButton.Click += new System.EventHandler(this.AddButton_Click);
 
@@ -48,7 +48,7 @@ namespace Schneegans.Unattend
             this.removeButton.Location = new System.Drawing.Point(278, 39);
             this.removeButton.Name = "removeButton";
             this.removeButton.Size = new System.Drawing.Size(75, 23);
-            this.removeButton.Text = "Supprimer";
+            this.removeButton.Text = "Remove";
             this.removeButton.UseVisualStyleBackColor = true;
             this.removeButton.Click += new System.EventHandler(this.RemoveButton_Click);
 
@@ -56,7 +56,7 @@ namespace Schneegans.Unattend
             this.generateButton.Location = new System.Drawing.Point(12, 226);
             this.generateButton.Name = "generateButton";
             this.generateButton.Size = new System.Drawing.Size(340, 23);
-            this.generateButton.Text = "Générer le fichier autounattend.xml...";
+            this.generateButton.Text = "Generate autounattend.xml file...";
             this.generateButton.UseVisualStyleBackColor = true;
             this.generateButton.Click += new System.EventHandler(this.GenerateButton_Click);
 
@@ -103,13 +103,13 @@ namespace Schneegans.Unattend
             string packageName = wingetPackageTextBox.Text.Trim();
             if (string.IsNullOrEmpty(packageName))
             {
-                MessageBox.Show("Veuillez entrer un nom de paquet Winget.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Please enter a Winget package name.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
             if (packagesListBox.Items.Contains(packageName))
             {
-                MessageBox.Show("Ce paquet est déjà dans la liste.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("This package is already in the list.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -120,7 +120,7 @@ namespace Schneegans.Unattend
             }
             else
             {
-                MessageBox.Show($"Le paquet Winget '{packageName}' n'a pas été trouvé.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"The Winget package '{packageName}' was not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -132,7 +132,7 @@ namespace Schneegans.Unattend
             }
             else
             {
-                MessageBox.Show("Veuillez sélectionner un paquet à supprimer.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Please select a package to remove.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -142,7 +142,7 @@ namespace Schneegans.Unattend
             {
                 saveFileDialog.Filter = "XML files (*.xml)|*.xml";
                 saveFileDialog.FileName = "autounattend.xml";
-                saveFileDialog.Title = "Enregistrer le fichier autounattend.xml";
+                saveFileDialog.Title = "Save the autounattend.xml file";
 
                 if (saveFileDialog.ShowDialog() == DialogResult.OK)
                 {
@@ -173,7 +173,7 @@ namespace Schneegans.Unattend
             }
             catch (Exception)
             {
-                MessageBox.Show("Winget n'est pas installé ou n'est pas dans le PATH.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Winget is not installed or not in the PATH.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
         }
@@ -191,7 +191,7 @@ namespace Schneegans.Unattend
 
             XmlDocument xml = generator.GenerateXml(config);
             File.WriteAllBytes(filePath, UnattendGenerator.Serialize(xml));
-            MessageBox.Show($"Le fichier autounattend.xml a été généré avec succès à l'emplacement :\n{filePath}", "Succès", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show($"The autounattend.xml file has been successfully generated at:\n{filePath}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

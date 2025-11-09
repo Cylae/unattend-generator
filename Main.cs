@@ -833,87 +833,113 @@ public class UnattendGenerator
 {
   public UnattendGenerator()
   {
-    {
-      string json = Util.StringFromResource("Bloatware.json");
-      JsonSerializerSettings settings = new()
-      {
-        TypeNameHandling = TypeNameHandling.Auto,
-      };
-      Bloatwares = JsonConvert.DeserializeObject<Bloatware[]>(json, settings).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("Component.json");
-      Components = JsonConvert.DeserializeObject<Component[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("ImageLanguage.json");
-      ImageLanguages = JsonConvert.DeserializeObject<ImageLanguage[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("KeyboardIdentifier.json");
-      KeyboardIdentifiers = JsonConvert.DeserializeObject<KeyboardIdentifier[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("GeoId.json");
-      GeoLocations = JsonConvert.DeserializeObject<GeoLocation[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("UserLocale.json");
-      JsonConverter[] converters = [new KeyboardConverter(this), new GeoLocationConverter(this)];
-      UserLocales = JsonConvert.DeserializeObject<UserLocale[]>(json, converters).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("WindowsEdition.json");
-      WindowsEditions = JsonConvert.DeserializeObject<WindowsEdition[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("TimeOffset.json");
-      TimeOffsets = JsonConvert.DeserializeObject<TimeOffset[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("DesktopIcon.json");
-      DesktopIcons = JsonConvert.DeserializeObject<DesktopIcon[]>(json).ToKeyedDictionary();
-    }
-    {
-      string json = Util.StringFromResource("StartFolder.json");
-      JsonConverter[] converters = [new Base64Converter()];
-      StartFolders = JsonConvert.DeserializeObject<StartFolder[]>(json, converters).ToKeyedDictionary();
-    }
+    Bloatwares = LoadBloatwares();
+    Components = LoadComponents();
+    ImageLanguages = LoadImageLanguages();
+    KeyboardIdentifiers = LoadKeyboardIdentifiers();
+    GeoLocations = LoadGeoLocations();
+    UserLocales = LoadUserLocales();
+    WindowsEditions = LoadWindowsEditions();
+    TimeOffsets = LoadTimeOffsets();
+    DesktopIcons = LoadDesktopIcons();
+    StartFolders = LoadStartFolders();
 
+    VerifyData();
+  }
+
+  private IImmutableDictionary<string, Bloatware> LoadBloatwares()
+  {
+    string json = Util.StringFromResource("Bloatware.json");
+    JsonSerializerSettings settings = new()
     {
-      VerifyUniqueKeys(Components.Values, e => e.Id);
-    }
-    {
-      VerifyUniqueKeys(WindowsEditions.Values, e => e.Id);
-      VerifyUniqueKeys(WindowsEditions.Values, e => e.DisplayName);
-      VerifyUniqueKeys(WindowsEditions.Values, e => e.ProductKey);
-    }
-    {
-      VerifyUniqueKeys(UserLocales.Values, e => e.Id);
-      VerifyUniqueKeys(UserLocales.Values, e => e.DisplayName);
-    }
-    {
-      VerifyUniqueKeys(KeyboardIdentifiers.Values, e => e.Id);
-      VerifyUniqueKeys(KeyboardIdentifiers.Values, e => e.DisplayName);
-    }
-    {
-      VerifyUniqueKeys(ImageLanguages.Values, e => e.Id);
-      VerifyUniqueKeys(ImageLanguages.Values, e => e.DisplayName);
-    }
-    {
-      VerifyUniqueKeys(TimeOffsets.Values, e => e.Id);
-      VerifyUniqueKeys(TimeOffsets.Values, e => e.DisplayName);
-    }
-    {
-      VerifyUniqueKeys(DesktopIcons.Values, e => e.Id);
-      VerifyUniqueKeys(DesktopIcons.Values, e => e.Guid);
-      VerifyUniqueKeys(DesktopIcons.Values, e => e.DisplayName);
-    }
-    {
-      VerifyUniqueKeys(StartFolders.Values, e => e.Id);
-      VerifyUniqueKeys(StartFolders.Values, e => e.DisplayName);
-      VerifyUniqueKeys(StartFolders.Values, e => Convert.ToBase64String(e.Bytes));
-    }
+      TypeNameHandling = TypeNameHandling.Auto,
+    };
+    return JsonConvert.DeserializeObject<Bloatware[]>(json, settings).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, Component> LoadComponents()
+  {
+    string json = Util.StringFromResource("Component.json");
+    return JsonConvert.DeserializeObject<Component[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, ImageLanguage> LoadImageLanguages()
+  {
+    string json = Util.StringFromResource("ImageLanguage.json");
+    return JsonConvert.DeserializeObject<ImageLanguage[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, KeyboardIdentifier> LoadKeyboardIdentifiers()
+  {
+    string json = Util.StringFromResource("KeyboardIdentifier.json");
+    return JsonConvert.DeserializeObject<KeyboardIdentifier[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, GeoLocation> LoadGeoLocations()
+  {
+    string json = Util.StringFromResource("GeoId.json");
+    return JsonConvert.DeserializeObject<GeoLocation[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, UserLocale> LoadUserLocales()
+  {
+    string json = Util.StringFromResource("UserLocale.json");
+    JsonConverter[] converters = [new KeyboardConverter(this), new GeoLocationConverter(this)];
+    return JsonConvert.DeserializeObject<UserLocale[]>(json, converters).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, WindowsEdition> LoadWindowsEditions()
+  {
+    string json = Util.StringFromResource("WindowsEdition.json");
+    return JsonConvert.DeserializeObject<WindowsEdition[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, TimeOffset> LoadTimeOffsets()
+  {
+    string json = Util.StringFromResource("TimeOffset.json");
+    return JsonConvert.DeserializeObject<TimeOffset[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, DesktopIcon> LoadDesktopIcons()
+  {
+    string json = Util.StringFromResource("DesktopIcon.json");
+    return JsonConvert.DeserializeObject<DesktopIcon[]>(json).ToKeyedDictionary();
+  }
+
+  private IImmutableDictionary<string, StartFolder> LoadStartFolders()
+  {
+    string json = Util.StringFromResource("StartFolder.json");
+    JsonConverter[] converters = [new Base64Converter()];
+    return JsonConvert.DeserializeObject<StartFolder[]>(json, converters).ToKeyedDictionary();
+  }
+
+  private void VerifyData()
+  {
+    VerifyUniqueKeys(Components.Values, e => e.Id);
+
+    VerifyUniqueKeys(WindowsEditions.Values, e => e.Id);
+    VerifyUniqueKeys(WindowsEditions.Values, e => e.DisplayName);
+    VerifyUniqueKeys(WindowsEditions.Values, e => e.ProductKey);
+
+    VerifyUniqueKeys(UserLocales.Values, e => e.Id);
+    VerifyUniqueKeys(UserLocales.Values, e => e.DisplayName);
+
+    VerifyUniqueKeys(KeyboardIdentifiers.Values, e => e.Id);
+    VerifyUniqueKeys(KeyboardIdentifiers.Values, e => e.DisplayName);
+
+    VerifyUniqueKeys(ImageLanguages.Values, e => e.Id);
+    VerifyUniqueKeys(ImageLanguages.Values, e => e.DisplayName);
+
+    VerifyUniqueKeys(TimeOffsets.Values, e => e.Id);
+    VerifyUniqueKeys(TimeOffsets.Values, e => e.DisplayName);
+
+    VerifyUniqueKeys(DesktopIcons.Values, e => e.Id);
+    VerifyUniqueKeys(DesktopIcons.Values, e => e.Guid);
+    VerifyUniqueKeys(DesktopIcons.Values, e => e.DisplayName);
+
+    VerifyUniqueKeys(StartFolders.Values, e => e.Id);
+    VerifyUniqueKeys(StartFolders.Values, e => e.DisplayName);
+    VerifyUniqueKeys(StartFolders.Values, e => Convert.ToBase64String(e.Bytes));
   }
 
   private static void VerifyUniqueKeys<T>(IEnumerable<T> items, Func<T, object> keySelector)
@@ -970,43 +996,19 @@ public class UnattendGenerator
   [return: NotNull]
   public T Lookup<T>(string key) where T : class, IKeyed
   {
-    if (typeof(T) == typeof(WindowsEdition))
+    return (T)(object)(this as object switch
     {
-      return (T)(object)Lookup(WindowsEditions, key);
-    }
-    if (typeof(T) == typeof(UserLocale))
-    {
-      return (T)(object)Lookup(UserLocales, key);
-    }
-    if (typeof(T) == typeof(ImageLanguage))
-    {
-      return (T)(object)Lookup(ImageLanguages, key);
-    }
-    if (typeof(T) == typeof(KeyboardIdentifier))
-    {
-      return (T)(object)Lookup(KeyboardIdentifiers, key);
-    }
-    if (typeof(T) == typeof(TimeOffset))
-    {
-      return (T)(object)Lookup(TimeOffsets, key);
-    }
-    if (typeof(T) == typeof(Bloatware))
-    {
-      return (T)(object)Lookup(Bloatwares, key);
-    }
-    if (typeof(T) == typeof(GeoLocation))
-    {
-      return (T)(object)Lookup(GeoLocations, key);
-    }
-    if (typeof(T) == typeof(DesktopIcon))
-    {
-      return (T)(object)Lookup(DesktopIcons, key);
-    }
-    if (typeof(T) == typeof(Component))
-    {
-      return (T)(object)Lookup(Components, key);
-    }
-    throw new NotSupportedException();
+      _ when typeof(T) == typeof(WindowsEdition) => Lookup(WindowsEditions, key),
+      _ when typeof(T) == typeof(UserLocale) => Lookup(UserLocales, key),
+      _ when typeof(T) == typeof(ImageLanguage) => Lookup(ImageLanguages, key),
+      _ when typeof(T) == typeof(KeyboardIdentifier) => Lookup(KeyboardIdentifiers, key),
+      _ when typeof(T) == typeof(TimeOffset) => Lookup(TimeOffsets, key),
+      _ when typeof(T) == typeof(Bloatware) => Lookup(Bloatwares, key),
+      _ when typeof(T) == typeof(GeoLocation) => Lookup(GeoLocations, key),
+      _ when typeof(T) == typeof(DesktopIcon) => Lookup(DesktopIcons, key),
+      _ when typeof(T) == typeof(Component) => Lookup(Components, key),
+      _ => throw new NotSupportedException(),
+    });
   }
 
   public XmlDocument GenerateXml(Configuration config)
